@@ -41,6 +41,18 @@ class RecyclerViewAdapter<T : Any>(
 
     private val views = mutableMapOf<BindView, View>()
     private val fields = mutableMapOf<BindView, Field>()
+    private var bindAction: ((View, T, Int) -> Unit)? = null
+    private var onItemClickListener: ((T, Int) -> Unit)? = null
+
+    fun setCustomBind(bind: View.(T, Int) -> Unit): RecyclerViewAdapter<T> {
+        bindAction = bind
+        return this
+    }
+
+    fun setOnItemClickListener(action: T.(Int) -> Unit): RecyclerViewAdapter<T> {
+        onItemClickListener = action
+        return this
+    }
 
     init {
         dataClass.declaredMemberProperties.filter { BindView::class in it.annotations.map { it.annotationClass } }
@@ -55,7 +67,7 @@ class RecyclerViewAdapter<T : Any>(
         override fun getItemCount() = list.size
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) =
-            holder.bindItem(list[position])
+            holder.bindItem(list[position], position)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val itemView = LayoutInflater.from(context).inflate(xmlLayoutId, parent, attachToRoot)
@@ -76,7 +88,7 @@ class RecyclerViewAdapter<T : Any>(
         }
     }
 
-    internal fun apply(): Adapter {
+    fun apply(): Adapter {
         recyclerView.layoutManager = layoutManager.getLayoutManager(context)
         val adapter = Adapter()
         recyclerView.adapter = adapter
@@ -84,7 +96,7 @@ class RecyclerViewAdapter<T : Any>(
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bindItem(t: T) {
+        fun bindItem(t: T, position: Int) {
             for ((bindView, field) in fields) {
                 val value = field.get(t)
                 val view1 = views[bindView]!!
@@ -120,6 +132,8 @@ class RecyclerViewAdapter<T : Any>(
                         view1.isEnabled = value
                     }
                 }
+                bindAction?.invoke(itemView, t, position)
+                onItemClickListener?.invoke(t, position)
             }
         }
     }
@@ -131,7 +145,7 @@ fun <T : Any> RecyclerView.bind(
     ctx: Context,
     @LayoutRes xmlLayoutId: Int,
     layoutManager: RecyclerViewAdapter.LayoutManager = RecyclerViewAdapter.LayoutManager.LinearLayoutManager
-) {
+) =
     RecyclerViewAdapter(
         dataClass,
         this,
@@ -140,5 +154,4 @@ fun <T : Any> RecyclerView.bind(
         xmlLayoutId,
         false,
         layoutManager
-    ).apply()
-}
+    )
