@@ -16,5 +16,6 @@ class CircularProgressBarDialog(ctx: Context?, private val message: String?): Pr
             dialog_progress_bar_progress_message.text = it
         }
         dialog_progress_bar_progress_bar.start()
+        1
     }
 }

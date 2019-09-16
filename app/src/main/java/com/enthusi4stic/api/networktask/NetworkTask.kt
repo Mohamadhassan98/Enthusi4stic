@@ -48,7 +48,7 @@ private const val multiPartBodyExample = """
             .build()
 """
 
-open class NetworkTask(
+open class NetworkTask(beautiful horizontal progress
     val url: String,
     val method: Method = Method.GET,
     protected val body: RequestBody? = null,
